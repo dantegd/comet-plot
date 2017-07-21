@@ -1,0 +1,173 @@
+<!-- header('content-type: application/json; charset=utf-8');
+header("access-control-allow-origin: *"); -->
+
+<!--
+Comet Plot 1.0b1
+
+Author: Dante Gama Dessavre
+-->
+
+<!DOCTYPE html>
+<meta http-equiv="Access-Control-Allow-Origin" content="*">
+<meta charset="utf-8">
+<style>
+
+body {
+  font: 10px sans-serif;
+}
+
+.axis path, .axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.point {
+  fill: steelblue;
+  stroke: none;
+}
+
+
+.dot {
+  fill:steelblue;
+  stroke: none;
+}
+
+.dot2 {
+  fill:steelblue;
+  stroke: none;
+}
+
+
+.grid .tick {
+    stroke: lightgrey;
+    opacity: 0.7;
+}
+.grid path {
+      stroke-width: 0;
+}
+
+.grid .tick {
+    stroke: lightgrey;
+    opacity: 0.7;
+}
+.grid path {
+      stroke-width: 0;
+}
+
+#csvdata {
+    display: none;
+}
+
+</style>
+<body>
+
+<pre id="csvdata">
+    Year,Make,Model,Length
+    1997,Ford,E350,2.34
+    2000,Mercury,Cougar,2.38
+</pre>
+
+<script src="js/d3v2.js"></script>
+<script>
+
+var margin = {top: 20, right: 20, bottom: 30, left: 40},
+    width = 800 - margin.left - margin.right,
+    height = 800 - margin.top - margin.bottom;
+
+var x = d3.scale.linear()
+    .range([0, width]);
+
+var y = d3.scale.linear()
+    .range([height, 0]);
+
+
+function make_x_axis() {
+    return d3.svg.axis()
+        .scale(x)
+         .orient("bottom")
+         .ticks(20)
+}
+
+function make_y_axis() {
+    return d3.svg.axis()
+        .scale(y)
+        .orient("left")
+        .ticks(20)
+}
+
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+d3.csv("data.csv", function(data) {
+
+  // Coerce the strings to numbers.
+  data.forEach(function(d) {
+    d.x = +d.x2;
+    d.y = +d.y2;
+    d.x2 = +d.x1;
+    d.y2 = +d.y1;
+  });
+
+  // Compute the scales’ domains.
+  x.domain(d3.extent(data, function(d) { return d.x*1.2; })).nice();
+  y.domain(d3.extent(data, function(d) { return d.y*1.2; })).nice();
+
+  // Add the x-axis.
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.svg.axis().scale(x).orient("bottom"));
+
+  // Add the y-axis.
+  svg.append("g")
+      .attr("class", "y axis")
+      .call(d3.svg.axis().scale(y).orient("left"));
+
+  svg.append("g")
+        .attr("class", "grid")
+        .attr("transform", "translate(0," + height + ")")
+        .call(make_x_axis()
+            .tickSize(-height, 0, 0)
+            .tickFormat("")
+        )
+
+    svg.append("g")
+        .attr("class", "grid")
+        .call(make_y_axis()
+            .tickSize(-width, 0, 0)
+            .tickFormat("")
+        )
+
+  // Add the points!
+  svg.selectAll(".point")
+      .data(data)
+    .enter().append("path")
+      .attr("class", "point")
+      .attr("d", d3.svg.symbol().type("triangle-up").size( function(d){ return x(3.535); } ))
+      .attr("transform", function(d) { return "rotate("+ Math.atan2(d.x2-d.x, d.y2-d.y)*180/Math.PI +" " + x(d.x) + " " + y(d.y) + ") translate(" + x(d.x) + "," + y(d.y+(Math.sqrt(Math.pow((d.x2-d.x),2)+Math.pow((d.y2-d.y),2)))/2) + ") scale(1 "+ Math.sqrt(Math.pow((d.x2-d.x)-1,2)+Math.pow((d.y2-d.y)-1,2)) +")"  ; });
+
+    svg.selectAll(".dot")
+      .data(data)
+    .enter().append("svg:circle")
+          .attr("class","dot")
+          .attr("cx", function (d,i) { return x(d.x2); } )
+          .attr("cy", function (d) { return y(d.y2); } )
+          .attr("r", 3);
+
+  svg.selectAll(".dot2")
+      .data(data)
+    .enter().append("svg:circle")
+          .attr("class","dot2")
+          .attr("cx", function (d,i) { return x(d.x); } )
+          .attr("cy", function (d) { return y(d.y); } )
+          .attr("r", 6);
+
+});
+
+</script>
